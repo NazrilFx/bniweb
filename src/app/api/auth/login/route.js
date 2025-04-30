@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "@/models/User";
-import connectDB from "@/lib/dbConnect";
-import getCookieToken from "@/utils/getCookieToken";
+import User from "../../../../models/User"; // Pastikan path ini sesuai dengan struktur folder Anda
+import connectDB from "../../../../utils/dbConnect"; // Pastikan path ini sesuai dengan struktur folder Anda
+import getCookieToken from "../../../../utils/getCookieToken"; //
 
 export async function POST(req) {
   try {
