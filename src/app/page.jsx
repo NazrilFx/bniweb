@@ -22,9 +22,6 @@ dayjs.extend(isBetween);
 // ];
 
 export default function Dashboard() {
-  const today = dayjs().format("YYYY-MM-DD");
-  const sevenDaysAgo = dayjs().subtract(7, "day").format("YYYY-MM-DD");
-  const lastMonth = dayjs().subtract(1, "month").startOf("day");
   const [timePeriod, setTimePeriod] = useState("weekly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -40,12 +37,10 @@ export default function Dashboard() {
   const [actualData, setActualData] = useState([]);
   const [actualDataFiltered, setActualDataFiltered] = useState([]);
   const [standardData, setStandardData] = useState([]);
-  const data = [
-    { output_actual: 6000, reject_actual: 400 },
-    { output_actual: 5000, reject_actual: 200 },
-    { output_actual: 7000, reject_actual: 100 },
-    { output_actual: 5500, reject_actual: 300 }
-  ];
+
+  useEffect(() => {
+    handleApplyFilters();
+  }, [selectedMachine, endDate, startDate, timePeriod]);
 
   useEffect(() => {
     const fetchActual = async () => {
@@ -66,7 +61,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log(actualDataFiltered);
-    const efficiencyResult = calculateEfficiency(actualDataFiltered)
+    const efficiencyResult = calculateEfficiency(actualDataFiltered);
     setAvgEfficiency(efficiencyResult);
 
     const averageQualityRate = calculateAverageQualityRate(actualDataFiltered);
@@ -76,62 +71,84 @@ export default function Dashboard() {
     setAvgDowntime(downtimeResult);
 
     const groupedData = groupExtruderData(actualDataFiltered);
-    console.log(groupedData)
-  
+    console.log(groupedData);
+
     const ctxOutput = outputChartRef.current.getContext("2d");
     const ctxReject = rejectChartRef.current.getContext("2d");
 
-    if (outputChart) outputChart.destroy();
-    if (rejectChart) rejectChart.destroy();
+    // Destroy chart lama jika ada
+    if (outputChartRef.current._chartInstance) {
+      outputChartRef.current._chartInstance.destroy();
+    }
+    if (rejectChartRef.current._chartInstance) {
+      rejectChartRef.current._chartInstance.destroy();
+    }
 
     const newOutputChart = new Chart(ctxOutput, {
       type: "bar",
       data: {
-        labels: actualDataFiltered.map((m) => m.name),
+        labels: groupedData.map((m) => m.name),
         datasets: [
           {
             label: "Actual Output",
-            data: actualDataFiltered.map((m) => m.output_actual),
-            backgroundColor: "rgba(99, 102, 241, 0.6)",
-          },
-          {
-            label: "Standard Output",
-            data: actualDataFiltered.map((m) => m.output_standard),
-            backgroundColor: "rgba(229, 231, 235, 0.8)",
+            data: groupedData.map((m) => m.output_actual),
+            backgroundColor: "rgba(34, 197, 94, 0.6)", // Hijau
+            borderRadius: 10, // Sudut melengkung
           },
         ],
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: "bottom" } },
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
       },
     });
 
     const newRejectChart = new Chart(ctxReject, {
       type: "bar",
       data: {
-        labels: actualDataFiltered.map((m) => m.name),
+        labels: groupedData.map((m) => m.name),
         datasets: [
           {
             label: "Actual Reject Rate",
-            data: actualDataFiltered.map((m) => m.reject_actual),
-            backgroundColor: "rgba(239, 68, 68, 0.6)",
-          },
-          {
-            label: "Standard Reject Rate",
-            data: actualDataFiltered.map((m) => m.reject_standard),
-            backgroundColor: "rgba(229, 231, 235, 0.8)",
+            data: groupedData.map((m) => m.reject_actual),
+            backgroundColor: "rgba(239, 68, 68, 0.6)", // Merah (Tailwind: red-500)
+            borderRadius: 10, // Sudut melengkung
           },
         ],
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: "bottom" } },
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
       },
     });
 
-    setOutputChart(newOutputChart);
-    setRejectChart(newRejectChart);
+    // Simpan instance ke elemen canvas agar bisa destroy saat perlu
+    outputChartRef.current._chartInstance = newOutputChart;
+    rejectChartRef.current._chartInstance = newRejectChart;
+
+    // Cleanup function
+    return () => {
+      newOutputChart.destroy();
+      newRejectChart.destroy();
+    };
   }, [actualDataFiltered]);
 
   const handleApplyFilters = () => {
@@ -139,6 +156,7 @@ export default function Dashboard() {
       const itemDate = dayjs(item.date);
 
       const isWithinDateRange =
+        (timePeriod === "daily" && itemDate.isSame(dayjs(), "day")) ||
         (timePeriod === "weekly" &&
           itemDate.isAfter(dayjs().subtract(7, "day"))) ||
         (timePeriod === "monthly" &&
@@ -155,13 +173,6 @@ export default function Dashboard() {
     });
 
     setActualDataFiltered(filteredData);
-  };
-
-  const handleResetFilters = () => {
-    setTimePeriod("weekly");
-    setStartDate("");
-    setEndDate("");
-    setSelectedMachine("all");
   };
 
   const calculateEfficiency = (data) => {
@@ -181,31 +192,40 @@ export default function Dashboard() {
     const goodOutput = outputActual - rejectActual;
     return (goodOutput / outputActual) * 100;
   };
-  
+
   // Function to calculate average Quality Rate
   const calculateAverageQualityRate = (data) => {
     let totalQualityRate = 0;
     let totalItems = data.length;
-  
+
     data.forEach((item) => {
-      const qualityRate = calculateQualityRate(item.output_actual, item.reject_actual);
+      const qualityRate = calculateQualityRate(
+        item.output_actual,
+        item.reject_actual
+      );
       totalQualityRate += qualityRate;
     });
-  
+
     const averageQualityRate = totalQualityRate / totalItems;
     return averageQualityRate.toFixed(2); // Returns the average rounded to 2 decimal places
   };
 
   function analyzeDowntime(data) {
-    const totalActual = data.reduce((sum, item) => sum + item.downtime_actual, 0);
-    const totalStandard = data.reduce((sum, item) => sum + item.downtime_standard, 0);
-  
+    const totalActual = data.reduce(
+      (sum, item) => sum + item.downtime_actual,
+      0
+    );
+    const totalStandard = data.reduce(
+      (sum, item) => sum + item.downtime_standard,
+      0
+    );
+
     const averageActual = totalActual / data.length;
     const achievementPercentage = (totalActual / totalStandard) * 100;
-  
+
     return {
       averageActual: averageActual.toFixed(2), // jam
-      achievementPercentage: achievementPercentage.toFixed(2)
+      achievementPercentage: achievementPercentage.toFixed(2),
     };
   }
 
@@ -219,13 +239,13 @@ export default function Dashboard() {
           reject_standard: item.reject_standard, // diasumsikan sama per mesin
         };
       }
-  
+
       acc[item.name].output_actual += item.output_actual || 0;
       acc[item.name].reject_actual += item.reject_actual || 0;
-  
+
       return acc;
     }, {});
-  
+
     return Object.values(grouped).map((item) => ({
       name: item.name,
       output_actual: item.output_actual,
@@ -236,7 +256,7 @@ export default function Dashboard() {
         : 0,
     }));
   };
-    
+
   return (
     <div className="bg-gray-100 font-sans min-h-screen p-6 dashboard">
       <div className="container mx-auto">
@@ -261,7 +281,9 @@ export default function Dashboard() {
               </label>
               <select
                 value={timePeriod}
-                onChange={(e) => setTimePeriod(e.target.value)}
+                onChange={(e) => {
+                  setTimePeriod(e.target.value);
+                }}
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="daily">Daily</option>
@@ -314,29 +336,10 @@ export default function Dashboard() {
               </select>
             </div>
           </div>
-
-          {/* Buttons */}
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handleApplyFilters}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Apply Filters
-            </button>
-            <button
-              onClick={handleResetFilters}
-              className="ml-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            >
-              Reset
-            </button>
-          </div>
         </div>
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KpiCard
-            title="Total Production"
-            value={actualDataFiltered.length}
-          />
+          <KpiCard title="Total Production" value={actualDataFiltered.length} />
           <KpiCard
             title="Average Efficiency"
             value={avgEfficiency + " %"}
@@ -352,7 +355,9 @@ export default function Dashboard() {
           <KpiCard
             title="Downtime"
             value={avgDowntime.averageActual + " hrs"}
-            subtitle={avgDowntime.achievementPercentage + " % from target"}
+            subtitle={
+              avgDowntime.achievementPercentage - 100 + " % from target"
+            }
             color={avgDowntime.achievementPercentage > 75 ? "green" : "red"}
           />
         </div>
@@ -395,37 +400,8 @@ function KpiCard({ title, value, subtitle, color }) {
 
   return (
     <div className="bg-white rounded-xl shadow p-5 flex items-center gap-4">
-      <div className="p-2 bg-gray-100 rounded-full">
-        <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24">
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <line
-            x1="12"
-            y1="12"
-            x2="12"
-            y2="6"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <line
-            x1="12"
-            y1="12"
-            x2="16"
-            y2="8"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M4 12a8 8 0 0 1 16 0"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </svg>
+      <div className="p-2 w-13 h-13 bg-white flex items-center justify-center shadow-md rounded-full">
+        <img src="spedometer.jpg" className="max-w-8" alt="spedometer" />
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-500">{title}</h4>

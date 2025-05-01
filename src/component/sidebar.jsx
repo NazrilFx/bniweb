@@ -77,7 +77,7 @@ export default function Sidebar() {
     } catch (error) {
       console.error("Error during logout:", error);
     }
-  }
+  };
 
   if (!loading)
     return (
@@ -114,7 +114,7 @@ export default function Sidebar() {
                   {submenuOpen && (
                     <ul className="submenu" style={{ paddingLeft: "15px" }}>
                       <li>
-                        <a href="/master/user" className="nav-link">
+                        <a href="/master/users" className="nav-link">
                           <FaUsersCog /> Kelola User
                         </a>
                       </li>
@@ -137,6 +137,11 @@ export default function Sidebar() {
           ) : (
             <>
               {/* Kalau user NULL */}
+              <li className="nav-item">
+                <a href="/" className="nav-link active">
+                  <FaTachometerAlt /> Dashboard
+                </a>
+              </li>
               <li className="nav-item">
                 <a href="/login" className="nav-link">
                   <FaSignInAlt /> Login

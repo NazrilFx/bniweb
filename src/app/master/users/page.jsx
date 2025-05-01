@@ -1,49 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
-// Simulasi data users
-const simulatedUsers = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    email: "alice.johnson@example.com",
-    isAdmin: false,
-    created_at: "2025-04-10T08:15:30.000Z",
-  },
-  {
-    id: "2",
-    name: "Bob Smith",
-    email: "bob.smith@example.com",
-    isAdmin: false,
-    created_at: "2025-04-12T10:20:45.000Z",
-  },
-  {
-    id: "3",
-    name: "Carol Lee",
-    email: "carol.lee@example.com",
-    isAdmin: false,
-    created_at: "2025-04-15T14:05:10.000Z",
-  },
-  {
-    id: "4",
-    name: "David Kim",
-    email: "david.kim@example.com",
-    isAdmin: false,
-    created_at: "2025-04-18T16:50:00.000Z",
-  },
-  {
-    id: "5",
-    name: "Eva Brown",
-    email: "eva.brown@example.com",
-    isAdmin: true,
-    created_at: "2025-04-20T09:30:25.000Z",
-  },
-];
+import "../../globals.css";
+import SwitchToggle from "../../../component/SwitchButton";
+import Swal from "sweetalert2";
+import { set } from "mongoose";
 
 export default function Page() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [csrfToken, setCsrfToken] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -51,6 +17,7 @@ export default function Page() {
         const res = await fetch("/api/users");
         const data = await res.json();
 
+        console.log(data);
         if (res.ok) {
           setUsers(data.user);
         } else {
@@ -63,12 +30,61 @@ export default function Page() {
       }
     };
 
+    fetch("/api/csrf")
+      .then((res) => res.json())
+      .then((data) => setCsrfToken(data.csrfToken));
+
     fetchUsers();
   }, []);
 
-  useEffect(() => {
-     console.log(users)
-  }, [users]);
+  // useEffect(() => {
+  //    console.log(users)
+  // }, [users]);
+
+  const deactive = async (id) => {
+    try {
+      const res = await fetch(`/api/users/deactive`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: id.toString(), csrfToken }),
+      });
+      const body = await res.json();
+      if (res.ok) {
+        Swal.fire("Berhasil", "User telah di nonaktifkan", "success");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        console.error("response tidak ok");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const activate = async (id) => {
+    try {
+      const res = await fetch(`/api/users/activate`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, csrfToken }),
+      });
+      if (res.ok) {
+        Swal.fire("Berhasil", "User telah di aktifkan", "success");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        console.error("response tidak ok");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   if (loading) {
     return (
@@ -79,7 +95,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="dashboard min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Daftar Users</h1>
 
@@ -103,9 +119,21 @@ export default function Page() {
                   day: "numeric",
                 })}
               </p>
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">
+              <span className="mt-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">
                 {user.isAdmin ? <b>Admin</b> : "User"}
               </span>
+              {!user.isAdmin && (
+                <div className="flex items-center mt-2">
+                  <span
+                    className={`${
+                      user.isActive ? "bg-green-800" : "bg-red-800"
+                    } px-3 py-1 rounded-full text-sm text-white mr-2`}
+                  >
+                    {user.isActive ? "Active" : "Inactive"}
+                  </span>
+                  <SwitchToggle isOn={user.isActive? true : false} onTurnOff={() => {deactive(user._id)}} onTurnOn={() => {activate(user._id)}} />
+                </div>
+              )}
             </div>
           ))}
         </div>

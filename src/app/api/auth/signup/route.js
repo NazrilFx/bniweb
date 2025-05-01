@@ -31,6 +31,7 @@ export async function POST(req) {
       phone,
       profile_image: "", // Kosong dulu
       isAdmin: false,
+      isActive: false,
       created_at: new Date(),
       updated_at: new Date(),
     });
