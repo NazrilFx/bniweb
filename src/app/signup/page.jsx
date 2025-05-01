@@ -47,7 +47,10 @@ export default function SignupPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Signup failed");
+      if (!res.ok) {
+        setMessage(data.message || "An error occurred");
+        return
+      };
 
       setMessage("Signup successful! You can now login.");
     } catch (error) {

@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 
 const ActualSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  standarId: { type: ObjectId, required: true },
   output: { type: Number, required: true },
   rejectRate: { type: Number, required: true },
   downtime: { type: Number, required: true },

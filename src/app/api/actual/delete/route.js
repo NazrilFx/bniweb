@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import Actual from "../../../../models/Actual";
 import connectDB from "../../../../lib/dbConnect";
+import Actual from "../../../../models/Actual";
 import getCookieToken from "../../../../utils/getCookieToken";
 
-export async function POST(req) {
+// DELETE: /api/Actual/:id
+export async function DELETE(req) {
   await connectDB();
   const csrfTokenFromCookie = getCookieToken(req, "csrf_token");
 
   try {
     const body = await req.json();
-    const { csrfToken, standarId, output, rejectRate, downtime } = body;
-
+    const { csrfToken, id } = body;
     if (
       !csrfTokenFromCookie ||
       !csrfToken ||
@@ -19,23 +19,23 @@ export async function POST(req) {
       return NextResponse.json({ message: "Invalid CSRF" }, { status: 403 });
     }
 
-    const newActual = new Actual({
-      standarId,
-      output,
-      rejectRate,
-      downtime,
-      date: new Date(), 
+    const deletedActual = await Actual.findByIdAndDelete(id);
+
+    if (!deletedActual) {
+      return NextResponse.json(
+        { message: "Actual not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Actual deleted successfully",
+      data: deletedActual,
     });
-    await newActual.save();
-    
-    return NextResponse.json(
-      { message: "Actual created successfully", data: newActual },
-      { status: 201 }
-    );
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error("Error deleting Actual:", error);
     return NextResponse.json(
-      { message: "Internal server error", error },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }

@@ -81,7 +81,7 @@ export default function Sidebar() {
 
   if (!loading)
     return (
-      <aside className="sidebar">
+      <aside className="sidebar bg-gray-800 text-white">
         <div className="logo">
           <img
             src="https://via.placeholder.com/150x40?text=Company+Logo"
