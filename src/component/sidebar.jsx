@@ -41,13 +41,11 @@ export default function Sidebar() {
     fetchUser().then(() => {
       setLoading(false);
     });
-  }, []);
 
-  useEffect(() => {
-    if (!loading && !user && pathname !== "/login" && pathname !== "/signup") {
-      router.push("/login");
+    if (pathname === "/master/machine" || pathname === "/master/standar" || pathname === "/master/users") {
+      setSubmenuOpen(true);
     }
-  }, [user, pathname, router, loading]);
+  }, []);
 
   const toggleSubMenu = (e) => {
     e.preventDefault();
@@ -94,12 +92,12 @@ export default function Sidebar() {
             <>
               {/* Kalau user ADA */}
               <li className="nav-item">
-                <a href="/" className="nav-link active">
+                <a href="/" className={`nav-link ${pathname === "/" ? "active" : ""}`}>
                   <FaTachometerAlt /> Dashboard
                 </a>
               </li>
               <li className="nav-item">
-                <a href="/add-data" className="nav-link">
+                <a href="/add-data" className={`nav-link ${pathname === "/add-data" ? "active" : ""}`}>
                   <FaPlusCircle /> Tambah Data
                 </a>
               </li>
@@ -107,20 +105,23 @@ export default function Sidebar() {
               {/* Master Menu */}
               {user.isAdmin && (
                 <li className="nav-item">
-                  <a href="#" className="nav-link" onClick={toggleSubMenu}>
+                  <a href="#" className={"nav-link"} onClick={toggleSubMenu}>
                     <FaCogs /> Master
                     <FaChevronDown style={{ float: "right" }} />
                   </a>
                   {submenuOpen && (
                     <ul className="submenu" style={{ paddingLeft: "15px" }}>
                       <li>
-                        <a href="/master/users" className="nav-link">
+                        <a href="/master/users" className={`nav-link ${pathname === "/master/users" ? "active" : ""}`}>
                           <FaUsersCog /> Kelola User
                         </a>
                       </li>
                       <li>
-                        <a href="/master/machine" className="nav-link">
+                        <a href="/master/machine" className={`nav-link ${pathname === "/master/machine" ? "active" : ""}`}>
                           <FaBoxes /> Kelola mesin
+                        </a>
+                        <a href="/master/standar" className={`nav-link ${pathname === "/master/standar" ? "active" : ""}`}>
+                          <FaBoxes /> Standard mesin
                         </a>
                       </li>
                     </ul>

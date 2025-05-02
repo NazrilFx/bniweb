@@ -27,8 +27,6 @@ export default function DataProduksiMesin() {
   const [targetStandar, setTargerStandar] = useState("");
   const [targetActual, setTargerActual] = useState("");
   const [isModalStandarEditOpen, setIsModalStandarEditOpen] = useState(false);
-  const [isModalEditOpen, setIsModalEditOpen] = useState(false);
-  const [actual, setActual] = useState([]);
   const [updatedActual, setUpdatedActual] = useState([]);
   const [user, setUser] = useState({});
   const [isAdmin, setIsAdmin] = useState(false)
@@ -70,84 +68,15 @@ export default function DataProduksiMesin() {
       }
     };
 
-    const fetchActual = async () => {
-      try {
-        const res = await fetch("/api/actual");
-        const data = await res.json();
-
-        if (res.ok) {
-          setActual(data.data);
-        } else {
-          console.error("response tidak ok");
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     fetch("/api/csrf")
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken));
 
       fetchUser()
-    fetchStandar();
-    fetchActual().then(() => {
-      setTimeout(() => {
-        setLoading(false);
-      }, 2000);
-    });
+    fetchStandar().then(() => {
+      setLoading(false);
+    })
   }, []);
-
-  // const (e) => setNewName(e.target.value)} = (e) => {
-  //   setFormData({
-  //     ...formData,
-  //     [e.target.id.replace("input", "").toLowerCase()]: e.target.value,
-  //   });
-  // }
-
-  useEffect(() => {
-    const result = actual.map((ac) => {
-      // cari standar yang cocok (ambil yang pertama karena nama unik)
-      const std = standar.find((item) => item._id === ac.standarId) || {};
-
-      // hitung
-      const rejectedRate =
-        ((ac.rejectRate / ac.output) * 100).toFixed(2) + " %";
-      const downtimeRate = ((ac.downtime / ac.output) * 100).toFixed(2) + " %";
-      const stdDowntimeRate = ((std.downtime / std.output) * 100).toFixed(2) + " %";
-      const selisihOutput = ac.output - (std.output || 0) + " unit";
-      const selisihReject =
-        ((ac.rejectRate / ac.output) * 100 - (std.rejectRate || 0)).toFixed(2) +
-        " %";
-
-      const dt = dayjs.utc(ac.date).local(); // 1. parse dan konversi ke local
-      const date = dt.format("YYYY-MM-DD"); // 2. ambil string tanggal & jam
-      const hour = dt.hour(); // 3. ambil angka jam (0–23)
-      const shift =
-        hour >= 6 && hour < 18 // 4. tentukan day/night
-          ? "day"
-          : "night";
-
-      return {
-        _id: ac._id.toString(),
-        date,
-        shift,
-        name: std.name,
-        output: ac.output,
-        rejectRate: ac.rejectRate,
-        rejectedRate,
-        stdOutput: std.output,
-        stdRejectRate: std.rejectRate,
-        selisihOutput,
-        selisihReject,
-        stdDowntimeRate,
-        downtimeRate,
-        downtime: ac.downtime,
-      };
-    }); 
-
-    setUpdatedActual(result);
-  }, [actual, standar]);
 
   useEffect(() => {console.log(user)},[user])
 
@@ -377,84 +306,41 @@ export default function DataProduksiMesin() {
 
   return (
     <div>
-      <div className="header">
-        <div className="filters">
-          <input
-            type="date"
-            value={filterFrom}
-            onChange={(e) => setFilterFrom(e.target.value)}
-          />
-          <input
-            type="date"
-            value={filterTo}
-            onChange={(e) => setFilterTo(e.target.value)}
-          />
-          <select
-            value={filterMesin}
-            onChange={(e) => setFilterMesin(e.target.value)}
-          >
-            <option value="">Semua Mesin</option>
-            {(standar).map((std, i) => (
-              <option key={i} value={std.name}>
-                {std.name}
-              </option>
-            ))}
-          </select>
-          <button className="btn" onClick={() => setIsModalOpen(true)}>
-            + Tambah Data <b>Aktual</b>
-          </button>
-        </div>
-      </div>
 
       <h2>
-        Data Produksi <b>Aktual</b> Mesin
+        Data Produksi <b>Standar</b> Mesin
       </h2>
+
       <table id="dataTable">
         <thead>
           <tr>
-            <th>Tanggal</th>
             <th>Mesin</th>
-            <th>Actual Output</th>
-            <th>Actual Reject</th>
-            <th>Actual Rejected Rate</th>
             <th>Std Output</th>
             <th>Std Reject</th>
-            <th>Selisih Output</th>
-            <th>Selisih Reject Rate</th>
-            <th>Std Downtime Rate</th>
-            <th>Actual Downtime Rate</th>
+            <th>Std Downtime (Jam)</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          {filteredData.map((d, i) => (
+          {standar.map((d, i) => (
             <tr key={i}>
-              <td>
-                {d.date} / {d.shift}
-              </td>
               <td>{d.name}</td>
               <td>{d.output}</td>
               <td>{d.rejectRate}</td>
-              <td>{d.rejectedRate}</td>
-              <td>{d.stdOutput} unit</td>
-              <td>{d.stdRejectRate}</td>
-              <td>{d.selisihOutput}</td>
-              <td>{d.selisihReject}</td>
-              <td>{d.stdDowntimeRate} %</td>
-              <td>{d.downtimeRate}</td>
+              <td>{d.downtime}</td>
               <td>
                 <button
                   className="action-btn"
-                  onClick={() => handleDelete(d._id.toString())}
+                  onClick={() => handleDeleteStandar(d._id.toString())}
                 >
                   Hapus
                 </button>
                 <button
                   className="edit-btn"
                   onClick={() => {
-                    setIsModalEditOpen(true);
-                    setTargerActual(d._id);
-                    setNewStandarId(d.standarId);
+                    setIsModalStandarEditOpen(true);
+                    setTargerStandar(d._id.toString());
+                    setNewName(d.name);
                     setNewOutput(d.output);
                     setNewRejectedRate(d.rejectRate);
                     setNewDowntime(d.downtime);
@@ -468,89 +354,22 @@ export default function DataProduksiMesin() {
         </tbody>
       </table>
 
-      {/* Modal Untuk Aktual */}
-      {isModalOpen && (
+      {/* Modal Untuk Standar */}
+      {isModalStandarOpen && (
         <div className="modal" style={{ display: "flex" }}>
           <div className="modal-content">
             <h3>
-              Tambah Data Produksi <b>Aktual</b>
+              Tambah Data Produksi <b>Standar</b>
             </h3>
+
             <label>
-              Mesin:
-              <select
-                id="inputMesin"
-                value={newStandarId}
-                onChange={(e) => setNewStandarId(e.target.value)}
-              >
-                <option value="">-- Pilih Mesin --</option>
-                {standar.map((s, i) => (
-                  <option key={i} value={s._id.toString()}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Output Aktual:
+              Machine Standar Name
               <input
-                type="number"
+                type="text"
                 id="inputOutput"
-                value={newOutput}
-                onChange={(e) => setNewOutput(e.target.value)}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
               />
-            </label>
-            <label>
-              Reject Aktual:
-              <input
-                type="number"
-                id="inputReject"
-                value={newRejectedRate}
-                onChange={(e) => setNewRejectedRate(e.target.value)}
-              />
-            </label>
-            <label>
-              Downtime Aktual (jam):
-              <input
-                type="number"
-                id="inputDowntime" 
-                value={newDowntime}
-                onChange={(e) => setNewDowntime(e.target.value)}
-              />
-            </label>
-            <button className="btn" onClick={CreateActual}>
-              Simpan
-            </button>
-            <button
-              className="cancel-btn btn"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Batal
-            </button>
-          </div>
-        </div>
-      )}
-
-      {isModalEditOpen && (
-        <div className="modal" style={{ display: "flex" }}>
-          <div className="modal-content">
-            <h3>
-              Edit Data Produksi <b>Aktual</b>
-            </h3>
-
-            <label>
-              Mesin:
-              <select
-                id="inputMesin"
-                value={newStandarId}
-                onChange={(e) => setNewStandarId(e.target.value)}
-              >
-                <option value="">-- Pilih Mesin --</option>
-                {standar.map((s, i) => (
-                  <option key={i} value={s._id.toString()}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
             </label>
             <label>
               Standar Output:
@@ -579,12 +398,68 @@ export default function DataProduksiMesin() {
                 onChange={(e) => setNewDowntime(e.target.value)}
               />
             </label>
-            <button className="btn" onClick={handleEdit}>
+            <button className="btn" onClick={CreateStandar}>
+              Simpan
+            </button>
+            <button
+              className="cancel-btn btn"
+              onClick={() => setIsModalStandarOpen(false)}
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isModalStandarEditOpen && (
+        <div className="modal" style={{ display: "flex" }}>
+          <div className="modal-content">
+            <h3>
+              Edit Data Produksi <b>Standar</b>
+            </h3>
+
+            <label>
+              Machine Standar Name
+              <input
+                type="text"
+                id="inputOutput"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+            </label>
+            <label>
+              Standar Output:
+              <input
+                type="number"
+                id="inputOutput"
+                value={newOutput}
+                onChange={(e) => setNewOutput(e.target.value)}
+              />
+            </label>
+            <label>
+              Standar Reject:
+              <input
+                type="number"
+                id="inputReject"
+                value={newRejectedRate}
+                onChange={(e) => setNewRejectedRate(e.target.value)}
+              />
+            </label>
+            <label>
+              Standar Downtime (jam):
+              <input
+                type="number"
+                id="inputDowntime"
+                value={newDowntime}
+                onChange={(e) => setNewDowntime(e.target.value)}
+              />
+            </label>
+            <button className="btn" onClick={handleEditStandar}>
               Edit
             </button>
             <button
               className="cancel-btn btn"
-              onClick={() => setIsModalEditOpen(false)}
+              onClick={() => setIsModalStandarEditOpen(false)}
             >
               Batal
             </button>

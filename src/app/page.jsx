@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 import isBetween from "dayjs/plugin/isBetween";
 import dayjs from "dayjs";
-import { set } from "mongoose";
 
 // Tambahkan plugin isBetween ke dayjs
 dayjs.extend(isBetween);
@@ -236,8 +235,8 @@ export default function Dashboard() {
           name: item.name,
           output_actual: 0,
           reject_actual: 0,
-          output_standard: item.output_standard, // diasumsikan sama per mesin
-          reject_standard: item.reject_standard, // diasumsikan sama per mesin
+          output_standard: 0, // diasumsikan sama per mesin
+          reject_standard: 0, // diasumsikan sama per mesin
         };
       }
 
@@ -353,7 +352,7 @@ export default function Dashboard() {
           <KpiCard
             title="Quality Rate"
             value={avgQuality + " %"}
-            subtitle={`${85 - avgQuality} % from target`}
+            subtitle={`${(85 - avgQuality).toFixed(2)} % from target`}
             color={avgQuality > 85 ? "green" : "red"}
           />
           <KpiCard
