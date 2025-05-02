@@ -55,6 +55,8 @@ export default function SignupPage() {
       }
     };
 
+    fetchStandar()
+
     fetch("/api/csrf")
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken));

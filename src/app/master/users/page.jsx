@@ -4,14 +4,37 @@ import React, { useState, useEffect } from "react";
 import "../../globals.css";
 import SwitchToggle from "../../../component/SwitchButton";
 import Swal from "sweetalert2";
-import { set } from "mongoose";
 
 export default function Page() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setIsAdmin(data.user.isAdmin);
+        } else {
+          console.error("response tidak ok");
+        }
+      } catch (error) {
+        console.error(error);
+        hk;
+      }
+    };
+
+    fetchUser();
+
     const fetchUsers = async () => {
       try {
         const res = await fetch("/api/users");
@@ -26,7 +49,9 @@ export default function Page() {
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
       }
     };
 
@@ -62,7 +87,7 @@ export default function Page() {
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   const activate = async (id) => {
     try {
@@ -84,12 +109,21 @@ export default function Page() {
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Loading users...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin && !loading) {
+    return (
+      <div className="p-6 text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-2">Akses Ditolak</h1>
+        <p>Halaman ini hanya dapat diakses oleh admin.</p>
       </div>
     );
   }
@@ -131,7 +165,15 @@ export default function Page() {
                   >
                     {user.isActive ? "Active" : "Inactive"}
                   </span>
-                  <SwitchToggle isOn={user.isActive? true : false} onTurnOff={() => {deactive(user._id)}} onTurnOn={() => {activate(user._id)}} />
+                  <SwitchToggle
+                    isOn={user.isActive ? true : false}
+                    onTurnOff={() => {
+                      deactive(user._id);
+                    }}
+                    onTurnOn={() => {
+                      activate(user._id);
+                    }}
+                  />
                 </div>
               )}
             </div>

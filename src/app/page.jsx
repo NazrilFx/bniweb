@@ -92,7 +92,7 @@ export default function Dashboard() {
           {
             label: "Actual Output",
             data: groupedData.map((m) => m.output_actual),
-            backgroundColor: "rgba(34, 197, 94, 0.6)", // Hijau
+            backgroundColor: groupedData.map((m => {return m.output_actual < m.output_standard ? "rgba(239, 68, 68, 0.6)" : "rgba(34, 197, 94, 0.6)"})), // Hijau
             borderRadius: 10, // Sudut melengkung
           },
         ],
@@ -120,7 +120,7 @@ export default function Dashboard() {
           {
             label: "Actual Reject Rate",
             data: groupedData.map((m) => m.reject_actual),
-            backgroundColor: "rgba(239, 68, 68, 0.6)", // Merah (Tailwind: red-500)
+            backgroundColor: groupedData.map((m => {return m.reject_actual < m.reject_standard ? "rgba(239, 68, 68, 0.6)" : "rgba(34, 197, 94, 0.6)" })), // Merah (Tailwind: red-500)
             borderRadius: 10, // Sudut melengkung
           },
         ],
@@ -236,12 +236,15 @@ export default function Dashboard() {
           name: item.name,
           output_actual: 0,
           reject_actual: 0,
+          output_standard: item.output_standard, // diasumsikan sama per mesin
           reject_standard: item.reject_standard, // diasumsikan sama per mesin
         };
       }
 
       acc[item.name].output_actual += item.output_actual || 0;
       acc[item.name].reject_actual += item.reject_actual || 0;
+      acc[item.name].reject_standard += item.reject_standard || 0;
+      acc[item.name].output_standard += item.output_standard || 0;
 
       return acc;
     }, {});
@@ -249,6 +252,7 @@ export default function Dashboard() {
     return Object.values(grouped).map((item) => ({
       name: item.name,
       output_actual: item.output_actual,
+      output_standard: item.output_standard,
       reject_actual: item.reject_actual,
       reject_standard: item.reject_standard,
       reject_rate_actual: item.output_actual
@@ -343,22 +347,20 @@ export default function Dashboard() {
           <KpiCard
             title="Average Efficiency"
             value={avgEfficiency + " %"}
-            subtitle={avgEfficiency > 75 ? "Good" : "Needs Improvement"}
-            color={avgEfficiency > 75 ? "green" : "red"}
+            subtitle={`${(100 - avgEfficiency).toFixed(2)} % from target`}
+            color={avgEfficiency > 100 ? "green" : "red"}
           />
           <KpiCard
             title="Quality Rate"
             value={avgQuality + " %"}
-            subtitle={avgQuality > 75 ? "Good" : "Needs Improvement"}
-            color={avgQuality > 75 ? "green" : "red"}
+            subtitle={`${85 - avgQuality} % from target`}
+            color={avgQuality > 85 ? "green" : "red"}
           />
           <KpiCard
             title="Downtime"
             value={avgDowntime.averageActual + " hrs"}
-            subtitle={
-              avgDowntime.achievementPercentage - 100 + " % from target"
-            }
-            color={avgDowntime.achievementPercentage > 75 ? "green" : "red"}
+            subtitle={`${(100 - avgDowntime.achievementPercentage).toFixed(2)} % from target`}
+            color={(100 - avgDowntime.achievementPercentage) < 0 ? "red" : "green"}
           />
         </div>
         {/* Charts Section */}

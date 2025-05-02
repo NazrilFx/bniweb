@@ -38,27 +38,10 @@ export default function DataProduksiMesin() {
   const [actual, setActual] = useState([]);
   const [updatedActual, setUpdatedActual] = useState([]);
   const [user, setUser] = useState({});
-
-  const mesinStandar = {
-    "Extruder 1": { output: 587, rejectRate: 4.9, downtimeRate: 3.69 },
-    "Extruder 2": { output: 623, rejectRate: 3.8, downtimeRate: 2.95 },
-    "Extruder 3": { output: 565, rejectRate: 2.5, downtimeRate: 4.3 },
-    "Extruder 4": { output: 565, rejectRate: 2.5, downtimeRate: 1.13 },
-    "Extruder 5": { output: 565, rejectRate: 2.5, downtimeRate: 4.23 },
-    "Extruder 6": { output: 565, rejectRate: 2.5, downtimeRate: 3.26 },
-    "Extruder 7": { output: 565, rejectRate: 2.5, downtimeRate: 2.19 },
-    "Extruder 8": { output: 565, rejectRate: 2.5, downtimeRate: 1.19 },
-    "Extruder 9": { output: 565, rejectRate: 2.5, downtimeRate: 4.96 },
-    "Extruder 10": { output: 565, rejectRate: 2.5, downtimeRate: 1.03 },
-    "Extruder 11": { output: 565, rejectRate: 2.5, downtimeRate: 4.08 },
-    "Extruder 12": { output: 565, rejectRate: 2.5, downtimeRate: 3.99 },
-    "Extruder 13": { output: 565, rejectRate: 2.5, downtimeRate: 2.51 },
-  };
-  useEffect(() => {
-    console.log(newStandarId);
-  }, [newStandarId]);
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
+    setLoading(true)
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -70,7 +53,7 @@ export default function DataProduksiMesin() {
         const data = await res.json();
         if (res.ok) {
           setUser(data.user);
-
+          setIsAdmin(data.user.isAdmin)
         } else {
           console.error("response tidak ok");
         }
@@ -115,7 +98,11 @@ export default function DataProduksiMesin() {
 
       fetchUser()
     fetchStandar();
-    fetchActual();
+    fetchActual().then(() => {
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+    });
   }, []);
 
   // const (e) => setNewName(e.target.value)} = (e) => {
@@ -377,6 +364,23 @@ export default function DataProduksiMesin() {
       setNewRejectedRate("");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading machine...</p>
+      </div>
+    );
+  }
+
+  if (!loading && !isAdmin) {
+    return (
+      <div className="p-6 text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-2">Akses Ditolak</h1>
+        <p>Halaman ini hanya dapat diakses oleh admin.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
