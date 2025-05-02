@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  FiBarChart2,
+  FiPackage,
+  FiLogIn,
+  FiTrendingUp,
+  FiClock,
+} from "react-icons/fi";
+import { AiFillSafetyCertificate } from "react-icons/ai";
 import Chart from "chart.js/auto";
 import isBetween from "dayjs/plugin/isBetween";
 import dayjs from "dayjs";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 // Tambahkan plugin isBetween ke dayjs
 dayjs.extend(isBetween);
@@ -21,6 +31,7 @@ dayjs.extend(isBetween);
 // ];
 
 export default function Dashboard() {
+  const pathname = usePathname();
   const [timePeriod, setTimePeriod] = useState("weekly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -31,11 +42,10 @@ export default function Dashboard() {
 
   const outputChartRef = useRef(null);
   const rejectChartRef = useRef(null);
-  const [outputChart, setOutputChart] = useState(null);
-  const [rejectChart, setRejectChart] = useState(null);
   const [actualData, setActualData] = useState([]);
   const [actualDataFiltered, setActualDataFiltered] = useState([]);
   const [standardData, setStandardData] = useState([]);
+  const [user, setUser] = useState();
 
   useEffect(() => {
     handleApplyFilters();
@@ -56,6 +66,18 @@ export default function Dashboard() {
       }
     };
     fetchActual();
+
+    const fetchUser = async () => {
+      const res = await fetch("api/auth/me");
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+      } else {
+        setUser(null)
+      }
+    };
+
+    fetchUser()
   }, []);
 
   useEffect(() => {
@@ -91,7 +113,11 @@ export default function Dashboard() {
           {
             label: "Actual Output",
             data: groupedData.map((m) => m.output_actual),
-            backgroundColor: groupedData.map((m => {return m.output_actual < m.output_standard ? "rgba(239, 68, 68, 0.6)" : "rgba(34, 197, 94, 0.6)"})), // Hijau
+            backgroundColor: groupedData.map((m) => {
+              return m.output_actual < m.output_standard
+                ? "rgba(239, 68, 68, 0.6)"
+                : "rgba(34, 197, 94, 0.6)";
+            }), // Hijau
             borderRadius: 10, // Sudut melengkung
           },
         ],
@@ -119,7 +145,11 @@ export default function Dashboard() {
           {
             label: "Actual Reject Rate",
             data: groupedData.map((m) => m.reject_actual),
-            backgroundColor: groupedData.map((m => {return m.reject_actual < m.reject_standard ? "rgba(239, 68, 68, 0.6)" : "rgba(34, 197, 94, 0.6)" })), // Merah (Tailwind: red-500)
+            backgroundColor: groupedData.map((m) => {
+              return m.reject_actual < m.reject_standard
+                ? "rgba(239, 68, 68, 0.6)"
+                : "rgba(34, 197, 94, 0.6)";
+            }), // Merah (Tailwind: red-500)
             borderRadius: 10, // Sudut melengkung
           },
         ],
@@ -261,7 +291,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="bg-gray-100 font-sans min-h-screen p-6 dashboard">
+    <div
+      className={`${
+        user ? "dashboard" : "ml-[0px]"
+      } bg-gray-100 font-sans min-h-screen p-6`}
+    >
       <div className="container mx-auto">
         <div className="bg-white rounded-xl shadow p-6 mb-8 text-center">
           <h2 className="text-2xl font-semibold text-gray-800">
@@ -321,7 +355,7 @@ export default function Dashboard() {
             )}
 
             {/* Machine Filter */}
-            <div>
+            <div className="flex flex-col">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Machine
               </label>
@@ -338,42 +372,76 @@ export default function Dashboard() {
                 ))}
               </select>
             </div>
+            {!user && (
+              <Link className="text-blue-600 mt-10 ml-auto" href={"/login"}>
+                <FiLogIn />
+              </Link>
+            )}
           </div>
         </div>
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <KpiCard title="Total Production" value={actualDataFiltered.length} />
           <KpiCard
+            title="Total Production"
+            icon={1}
+            value={actualDataFiltered.length}
+          />
+          <KpiCard
+            icon={2}
             title="Average Efficiency"
             value={avgEfficiency + " %"}
             subtitle={`${(100 - avgEfficiency).toFixed(2)} % from target`}
             color={avgEfficiency > 100 ? "green" : "red"}
           />
           <KpiCard
+            icon={3}
             title="Quality Rate"
             value={avgQuality + " %"}
             subtitle={`${(85 - avgQuality).toFixed(2)} % from target`}
             color={avgQuality > 85 ? "green" : "red"}
           />
           <KpiCard
+            icon={4}
             title="Downtime"
             value={avgDowntime.averageActual + " hrs"}
-            subtitle={`${(100 - avgDowntime.achievementPercentage).toFixed(2)} % from target`}
-            color={(100 - avgDowntime.achievementPercentage) < 0 ? "red" : "green"}
+            subtitle={`${(100 - avgDowntime.achievementPercentage).toFixed(
+              2
+            )} % from target`}
+            color={
+              100 - avgDowntime.achievementPercentage < 0 ? "red" : "green"
+            }
           />
         </div>
         {/* Charts Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-700">
-              Production Output vs Standard
-            </h2>
+            <div className="flex flex-row items-center">
+              <FiBarChart2 className="mr-2 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-700">
+                Production Output vs Standard
+              </h2>
+              <small className="text-white bg-green-600 rounded-md px-2 font-bold ml-auto">
+                Below Target
+              </small>
+              <small className="text-white bg-red-600 rounded-md px-2 font-bold ml-2">
+                Above Target
+              </small>
+            </div>
             <canvas ref={outputChartRef} className="w-full h-64" />
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-700">
-              Reject Rate vs Standard
-            </h2>
+            <div className="flex flex-row items-center">
+              <FiBarChart2 className="mr-2 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-700">
+                Production Output vs Standard
+              </h2>
+              <small className="text-white bg-green-600 rounded-md px-2 font-bold ml-auto">
+                Below Target
+              </small>
+              <small className="text-white bg-red-600 rounded-md px-2 font-bold ml-2">
+                Above Target
+              </small>
+            </div>
             <canvas ref={rejectChartRef} className="w-full h-64" />
           </div>
         </div>
@@ -392,17 +460,43 @@ export default function Dashboard() {
   );
 }
 
-function KpiCard({ title, value, subtitle, color }) {
+function KpiCard({ title, value, subtitle, color, icon }) {
   const colorClass = {
     green: "text-green-600",
     red: "text-red-600",
     orange: "text-orange-500",
   }[color];
 
+  let iconColor;
+
+  switch (icon) {
+    case 1:
+      iconColor = "bg-blue-100";
+      break;
+    case 2:
+      iconColor = "bg-green-100";
+      break;
+    case 3:
+      iconColor = "bg-fuchsia-100";
+      break;
+    case 4:
+      iconColor = "bg-orange-100";
+      break;
+    default:
+      iconColor = "bg-gray-100";
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow p-5 flex items-center gap-4">
-      <div className="p-2 w-13 h-13 bg-white flex items-center justify-center shadow-md rounded-full">
-        <img src="spedometer.jpg" className="max-w-8" alt="spedometer" />
+    <div className="bg-white rounded-xl shadow-md p-5 flex items-center gap-4">
+      <div
+        className={`${iconColor} p-2 w-13 h-13 flex items-center justify-center rounded-full`}
+      >
+        {icon === 1 && <FiPackage className="text-2xl text-blue-600" />}
+        {icon === 2 && <FiTrendingUp className="text-2xl text-green-600" />}
+        {icon === 3 && (
+          <AiFillSafetyCertificate className="text-2xl text-fuchsia-600" />
+        )}
+        {icon === 4 && <FiClock className="text-2xl text-orange-600" />}
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-500">{title}</h4>

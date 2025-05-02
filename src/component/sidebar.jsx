@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import path from "path";
 import { useState, useEffect } from "react";
 import {
   FaTachometerAlt,
@@ -42,7 +43,11 @@ export default function Sidebar() {
       setLoading(false);
     });
 
-    if (pathname === "/master/machine" || pathname === "/master/standar" || pathname === "/master/users") {
+    if (
+      pathname === "/master/machine" ||
+      pathname === "/master/standar" ||
+      pathname === "/master/users"
+    ) {
       setSubmenuOpen(true);
     }
   }, []);
@@ -77,85 +82,111 @@ export default function Sidebar() {
     }
   };
 
-  if (!loading)
-    return (
-      <aside className="sidebar bg-gray-800 text-white">
-        <div className="logo">
-          <img
-            src="https://via.placeholder.com/150x40?text=Company+Logo"
-            alt="Company Logo"
-          />
-        </div>
+  if (pathname === "/" && !user) {
+    return null; // Do not render sidebar on the root path
+  }
 
-        <ul className="nav-menu">
-          {user ? (
-            <>
-              {/* Kalau user ADA */}
-              <li className="nav-item">
-                <a href="/" className={`nav-link ${pathname === "/" ? "active" : ""}`}>
-                  <FaTachometerAlt /> Dashboard
-                </a>
-              </li>
-              <li className="nav-item">
-                <a href="/add-data" className={`nav-link ${pathname === "/add-data" ? "active" : ""}`}>
-                  <FaPlusCircle /> Tambah Data
-                </a>
-              </li>
+  return (
+    <aside className={`sidebar bg-gray-800 text-white`}>
+      <div className="logo">
+        <img
+          src="https://via.placeholder.com/150x40?text=Company+Logo"
+          alt="Company Logo"
+        />
+      </div>
 
-              {/* Master Menu */}
-              {user.isAdmin && (
-                <li className="nav-item">
-                  <a href="#" className={"nav-link"} onClick={toggleSubMenu}>
-                    <FaCogs /> Master
-                    <FaChevronDown style={{ float: "right" }} />
-                  </a>
-                  {submenuOpen && (
-                    <ul className="submenu" style={{ paddingLeft: "15px" }}>
-                      <li>
-                        <a href="/master/users" className={`nav-link ${pathname === "/master/users" ? "active" : ""}`}>
-                          <FaUsersCog /> Kelola User
-                        </a>
-                      </li>
-                      <li>
-                        <a href="/master/machine" className={`nav-link ${pathname === "/master/machine" ? "active" : ""}`}>
-                          <FaBoxes /> Kelola mesin
-                        </a>
-                        <a href="/master/standar" className={`nav-link ${pathname === "/master/standar" ? "active" : ""}`}>
-                          <FaBoxes /> Standard mesin
-                        </a>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-              )}
+      <ul className="nav-menu">
+        {user ? (
+          <>
+            {/* Kalau user ADA */}
+            <li className="nav-item">
+              <a
+                href="/"
+                className={`nav-link ${pathname === "/" ? "active" : ""}`}
+              >
+                <FaTachometerAlt /> Dashboard
+              </a>
+            </li>
+            <li className="nav-item">
+              <a
+                href="/add-data"
+                className={`nav-link ${
+                  pathname === "/add-data" ? "active" : ""
+                }`}
+              >
+                <FaPlusCircle /> Tambah Data
+              </a>
+            </li>
 
+            {/* Master Menu */}
+            {user.isAdmin && (
               <li className="nav-item">
-                <a onClick={handleLogout} className="nav-link">
-                  <FaSignOutAlt /> Logout
+                <a href="#" className={"nav-link"} onClick={toggleSubMenu}>
+                  <FaCogs /> Master
+                  <FaChevronDown style={{ float: "right" }} />
                 </a>
+                {submenuOpen && (
+                  <ul className="submenu" style={{ paddingLeft: "15px" }}>
+                    <li>
+                      <a
+                        href="/master/users"
+                        className={`nav-link ${
+                          pathname === "/master/users" ? "active" : ""
+                        }`}
+                      >
+                        <FaUsersCog /> Kelola User
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="/master/machine"
+                        className={`nav-link ${
+                          pathname === "/master/machine" ? "active" : ""
+                        }`}
+                      >
+                        <FaBoxes /> Kelola mesin
+                      </a>
+                      <a
+                        href="/master/standar"
+                        className={`nav-link ${
+                          pathname === "/master/standar" ? "active" : ""
+                        }`}
+                      >
+                        <FaBoxes /> Standard mesin
+                      </a>
+                    </li>
+                  </ul>
+                )}
               </li>
-            </>
-          ) : (
-            <>
-              {/* Kalau user NULL */}
-              <li className="nav-item">
-                <a href="/" className="nav-link active">
-                  <FaTachometerAlt /> Dashboard
-                </a>
-              </li>
-              <li className="nav-item">
-                <a href="/login" className="nav-link">
-                  <FaSignInAlt /> Login
-                </a>
-              </li>
-              <li className="nav-item">
-                <a href="/signup" className="nav-link">
-                  <FaUserPlus /> Sign Up
-                </a>
-              </li>
-            </>
-          )}
-        </ul>
-      </aside>
-    );
+            )}
+
+            <li className="nav-item">
+              <a onClick={handleLogout} className="nav-link">
+                <FaSignOutAlt /> Logout
+              </a>
+            </li>
+          </>
+        ) : (
+          <>
+            {/* Kalau user NULL */}
+            <li className="nav-item">
+              <a href="/" className="nav-link active">
+                <FaTachometerAlt /> Dashboard
+              </a>
+            </li>
+            <li className="nav-item">
+              <a href="/login" className="nav-link">
+                <FaSignInAlt /> Login
+              </a>
+            </li>
+            <li className="nav-item">
+              <a href="/signup" className="nav-link">
+                <FaUserPlus /> Sign Up
+              </a>
+            </li>
+          </>
+        )}
+      </ul>
+    </aside>
+  );
 }
