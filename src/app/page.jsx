@@ -46,6 +46,11 @@ export default function Dashboard() {
   const [actualDataFiltered, setActualDataFiltered] = useState([]);
   const [standardData, setStandardData] = useState([]);
   const [user, setUser] = useState();
+  const [isAllOutputRed, setIsAllOutputRed] = useState(false);
+  const [isAllRejectRed, setIsAllRejectRed] = useState(false);
+  const [outputSum, setOutputSum] = useState(0)
+  const [outputStandarSum, setOutputStandarSum] = useState(0)
+  let groupedData = [];
 
   useEffect(() => {
     handleApplyFilters();
@@ -73,15 +78,14 @@ export default function Dashboard() {
       if (res.ok) {
         setUser(data.user);
       } else {
-        setUser(null)
+        setUser(null);
       }
     };
 
-    fetchUser()
+    fetchUser();
   }, []);
 
   useEffect(() => {
-    console.log(actualDataFiltered);
     const efficiencyResult = calculateEfficiency(actualDataFiltered);
     setAvgEfficiency(efficiencyResult);
 
@@ -91,8 +95,29 @@ export default function Dashboard() {
     const downtimeResult = analyzeDowntime(actualDataFiltered);
     setAvgDowntime(downtimeResult);
 
-    const groupedData = groupExtruderData(actualDataFiltered);
-    console.log(groupedData);
+    groupedData = groupExtruderData(actualDataFiltered);
+
+    const output = groupedData.reduce((acc, item) => {
+      acc.push(item.output_actual < item.output_standard);
+      return acc;
+    }, []);
+    setIsAllOutputRed(output.every((val) => val === true));
+    setOutputSum(
+      groupedData.reduce((acc, item) => {
+        return acc + item.output_actual;
+      }, 0)
+    );
+    setOutputStandarSum(
+      groupedData.reduce((acc, item) => {
+        return acc + item.output_standard;
+      }, 0)
+    );
+
+    const reject = groupedData.reduce((acc, item) => {
+      acc.push(item.reject_actual < item.reject_standard);
+      return acc;
+    }, []);
+    setIsAllRejectRed(reject.every((val) => val === true));
 
     const ctxOutput = outputChartRef.current.getContext("2d");
     const ctxReject = rejectChartRef.current.getContext("2d");
@@ -384,7 +409,10 @@ export default function Dashboard() {
           <KpiCard
             title="Total Production"
             icon={1}
-            value={actualDataFiltered.length}
+            value={outputSum}
+            subtitle={`${outputSum - outputStandarSum} from target`}
+            color={outputSum < outputStandarSum ? "red" : "green"}
+            isPlus={outputSum < outputStandarSum ? false : true}
           />
           <KpiCard
             icon={2}
@@ -392,6 +420,7 @@ export default function Dashboard() {
             value={avgEfficiency + " %"}
             subtitle={`${(100 - avgEfficiency).toFixed(2)} % from target`}
             color={avgEfficiency > 100 ? "green" : "red"}
+            isPlus={avgEfficiency > 100 ? true : false}
           />
           <KpiCard
             icon={3}
@@ -399,6 +428,7 @@ export default function Dashboard() {
             value={avgQuality + " %"}
             subtitle={`${(85 - avgQuality).toFixed(2)} % from target`}
             color={avgQuality > 85 ? "green" : "red"}
+            isPlus={avgQuality > 85 ? true : false}
           />
           <KpiCard
             icon={4}
@@ -410,6 +440,7 @@ export default function Dashboard() {
             color={
               100 - avgDowntime.achievementPercentage < 0 ? "red" : "green"
             }
+            isPlus={100 - avgDowntime.achievementPercentage < 0 ? false : true}
           />
         </div>
         {/* Charts Section */}
@@ -427,6 +458,11 @@ export default function Dashboard() {
                 Above Target
               </small>
             </div>
+            {isAllOutputRed && (
+              <p className="bg-red-100 rounded-md px-3 text-">
+                All machine <b>outputs</b> are below the standard.
+              </p>
+            )}
             <canvas ref={outputChartRef} className="w-full h-64" />
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -441,6 +477,13 @@ export default function Dashboard() {
               <small className="text-white bg-red-600 rounded-md px-2 font-bold ml-2">
                 Above Target
               </small>
+            </div>
+            <div className="flex flex-row items-center">
+              {isAllRejectRed && (
+                <p className="bg-red-100 rounded-md px-3 text-">
+                  All machine <b>rejects</b> are below the standard.
+                </p>
+              )}
             </div>
             <canvas ref={rejectChartRef} className="w-full h-64" />
           </div>
@@ -460,7 +503,7 @@ export default function Dashboard() {
   );
 }
 
-function KpiCard({ title, value, subtitle, color, icon }) {
+function KpiCard({ title, value, subtitle, color, icon, isPlus }) {
   const colorClass = {
     green: "text-green-600",
     red: "text-red-600",
@@ -500,7 +543,7 @@ function KpiCard({ title, value, subtitle, color, icon }) {
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-500">{title}</h4>
-        <div className="text-2xl font-bold text-gray-800">{value}</div>
+        <div className={`text-2xl font-bold ${isPlus? "text-green-500" : "text-red-500"}`}>{value}</div>
         <div className={`text-sm mt-1 ${colorClass}`}>{subtitle}</div>
       </div>
     </div>
