@@ -496,7 +496,7 @@ export default function Dashboard() {
             icon={2}
             title="Average Efficiency"
             value={avgEfficiency + " %"}
-            subtitle={`${(100 - avgEfficiency).toFixed(2)} % from target`}
+            subtitle={`${(avgEfficiency - 100).toFixed(2)} % from target`}
             color={avgEfficiency > 100 ? "green" : "red"}
             isPlus={avgEfficiency > 100 ? true : false}
           />
@@ -504,7 +504,7 @@ export default function Dashboard() {
             icon={3}
             title="Quality Rate"
             value={avgQuality + " %"}
-            subtitle={`${(85 - avgQuality).toFixed(2)} % from target`}
+            subtitle={`${(avgQuality - 85).toFixed(2)} % from target`}
             color={avgQuality > 85 ? "green" : "red"}
             isPlus={avgQuality > 85 ? true : false}
           />
