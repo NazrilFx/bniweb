@@ -11,10 +11,25 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState("");
+  const [user, setUser] = useState({})
 
   useEffect(() => {
+    const fetchUser = async () => {
+      const res = await fetch("api/auth/me");
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
+    };
+
+    fetchUser().then(() => {
+      setLoading(false)
+    });
+    
     fetch("/api/csrf")
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken));
@@ -64,9 +79,19 @@ export default function SignupPage() {
       console.error("Signup error:", error);
     } finally {
       setLoading(false);
-      router.push("/login");
+      router.push("/master/users");
     }
   };
+  if (loading) {
+    <p>Loading...</p>
+  }
+
+  if (!user.isAdmin) {
+    <div className="p-6 text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-2">Akses Ditolak</h1>
+        <p>Halaman ini hanya dapat diakses oleh admin.</p>
+      </div>
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">

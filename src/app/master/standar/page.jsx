@@ -29,10 +29,10 @@ export default function DataProduksiMesin() {
   const [isModalStandarEditOpen, setIsModalStandarEditOpen] = useState(false);
   const [updatedActual, setUpdatedActual] = useState([]);
   const [user, setUser] = useState({});
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -44,14 +44,14 @@ export default function DataProduksiMesin() {
         const data = await res.json();
         if (res.ok) {
           setUser(data.user);
-          setIsAdmin(data.user.isAdmin)
+          setIsAdmin(data.user.isAdmin);
         } else {
           console.error("response tidak ok");
         }
       } catch (error) {
         console.error(error);
       }
-    }
+    };
 
     const fetchStandar = async () => {
       try {
@@ -72,13 +72,15 @@ export default function DataProduksiMesin() {
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken));
 
-      fetchUser()
+    fetchUser();
     fetchStandar().then(() => {
       setLoading(false);
-    })
+    });
   }, []);
 
-  useEffect(() => {console.log(user)},[user])
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -140,7 +142,8 @@ export default function DataProduksiMesin() {
 
   const handleDeleteStandar = (id) => {
     Swal.fire({
-      title: "Yakin hapus data ini? Data Actual Terkait Juga mungkin akan Rusak Bila Data Standar Dihapus",
+      title:
+        "Yakin hapus data ini? Data Actual Terkait Juga mungkin akan Rusak Bila Data Standar Dihapus",
       showCancelButton: true,
       confirmButtonText: "Hapus",
       cancelButtonText: "Batal",
@@ -249,43 +252,6 @@ export default function DataProduksiMesin() {
       setNewRejectedRate("");
     }
   };
-  const CreateActual = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/actual/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          csrfToken,
-          standarId: newStandarId,
-          output: newOutput,
-          rejectRate: newRejectedRate,
-          downtime: newDowntime,
-        }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setData((prev) => [...prev, data]);
-        setIsModalStandarOpen(false);
-        Swal.fire("Berhasil", "Data telah disimpan!", "success");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      } else {
-        Swal.fire("Gagal", `${data.message}`, "error");
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-      setNewName("");
-      setNewOutput("");
-      setNewDowntime("");
-      setNewRejectedRate("");
-    }
-  };
 
   if (loading) {
     return (
@@ -306,6 +272,11 @@ export default function DataProduksiMesin() {
 
   return (
     <div>
+      <div className="header">
+      <button className="btn" onClick={() => setIsModalStandarOpen(true)}>
+        + Tambah Data <b>Standar</b>
+      </button>
+      </div>
 
       <h2>
         Data Produksi <b>Standar</b> Mesin

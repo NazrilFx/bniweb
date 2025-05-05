@@ -366,11 +366,11 @@ export default function DataProduksiMesin() {
     );
   }
 
-  if (!loading && !isAdmin) {
+  if (!loading && !user.isActive) {
     return (
       <div className="p-6 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-2">Akses Ditolak</h1>
-        <p>Halaman ini hanya dapat diakses oleh admin.</p>
+        <p>Akun anda dalam keadaan tidak aktif, silahkan hubungi admin untuk mengaktifkan akun anda</p>
       </div>
     );
   }

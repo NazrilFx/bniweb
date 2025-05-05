@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import "../../globals.css";
 import SwitchToggle from "../../../component/SwitchButton";
 import Swal from "sweetalert2";
@@ -130,6 +131,7 @@ export default function Page() {
 
   return (
     <div className="dashboard min-h-screen bg-gray-100 py-10 px-4">
+        <Link className="bg-blue-500 rounded-md p-2 text-white" href={"/signup"}>Tambah User</Link>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Daftar Users</h1>
 

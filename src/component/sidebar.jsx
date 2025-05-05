@@ -109,12 +109,12 @@ export default function Sidebar() {
             </li>
             <li className="nav-item">
               <a
-                href="/add-data"
+                href="/master/machine"
                 className={`nav-link ${
-                  pathname === "/add-data" ? "active" : ""
+                  pathname === "/master/machine" ? "active" : ""
                 }`}
               >
-                <FaPlusCircle /> Tambah Data
+                <FaPlusCircle /> Production Data
               </a>
             </li>
 
@@ -134,25 +134,17 @@ export default function Sidebar() {
                           pathname === "/master/users" ? "active" : ""
                         }`}
                       >
-                        <FaUsersCog /> Kelola User
+                        <FaUsersCog /> User Management
                       </a>
                     </li>
                     <li>
-                      <a
-                        href="/master/machine"
-                        className={`nav-link ${
-                          pathname === "/master/machine" ? "active" : ""
-                        }`}
-                      >
-                        <FaBoxes /> Kelola mesin
-                      </a>
-                      <a
+                      <a  
                         href="/master/standar"
                         className={`nav-link ${
                           pathname === "/master/standar" ? "active" : ""
                         }`}
                       >
-                        <FaBoxes /> Standard mesin
+                        <FaBoxes /> Machine Management
                       </a>
                     </li>
                   </ul>
@@ -177,11 +169,6 @@ export default function Sidebar() {
             <li className="nav-item">
               <a href="/login" className="nav-link">
                 <FaSignInAlt /> Login
-              </a>
-            </li>
-            <li className="nav-item">
-              <a href="/signup" className="nav-link">
-                <FaUserPlus /> Sign Up
               </a>
             </li>
           </>

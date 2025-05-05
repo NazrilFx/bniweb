@@ -228,6 +228,7 @@ export default function Dashboard() {
         responsive: true,
         plugins: {
           legend: {
+            display: false,
             position: "bottom",
           },
         },
@@ -261,6 +262,7 @@ export default function Dashboard() {
         responsive: true,
         plugins: {
           legend: {
+            display: false,
             position: "bottom",
           },
         },
@@ -527,41 +529,31 @@ export default function Dashboard() {
             <div className="flex flex-row items-center">
               <FiBarChart2 className="mr-2 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-700">
-                Production Output vs Standard
+                Product Output
               </h2>
               <small className="text-white bg-green-600 rounded-md px-2 font-bold ml-auto">
-                Below Target
+                Below Standard
               </small>
               <small className="text-white bg-red-600 rounded-md px-2 font-bold ml-2">
-                Above Target
+                Above Standard
               </small>
             </div>
-            {isAllOutputRed && (
-              <p className="bg-red-100 rounded-md px-3 text-">
-                All machine <b>outputs</b> are below the standard.
-              </p>
-            )}
             <canvas ref={outputChartRef} className="w-full h-64" />
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-row items-center">
               <FiBarChart2 className="mr-2 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-700">
-                Production Output vs Standard
+                Reject Rate
               </h2>
               <small className="text-white bg-green-600 rounded-md px-2 font-bold ml-auto">
-                Below Target
+                Below Standard
               </small>
               <small className="text-white bg-red-600 rounded-md px-2 font-bold ml-2">
-                Above Target
+                Above Standard
               </small>
             </div>
             <div className="flex flex-row items-center">
-              {isAllRejectRed && (
-                <p className="bg-red-100 rounded-md px-3 text-">
-                  All machine <b>rejects</b> are below the standard.
-                </p>
-              )}
             </div>
             <canvas ref={rejectChartRef} className="w-full h-64" />
           </div>
