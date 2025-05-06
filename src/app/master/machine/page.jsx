@@ -9,6 +9,10 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
 export default function DataProduksiMesin() {
+  // date
+  const [date, setDate] = useState("");
+  const [shift, setShift] = useState("day");
+
   const [newName, setNewName] = useState("");
   const [newStandarId, setNewStandarId] = useState("");
   const [newOutput, setNewOutput] = useState("");
@@ -31,10 +35,10 @@ export default function DataProduksiMesin() {
   const [actual, setActual] = useState([]);
   const [updatedActual, setUpdatedActual] = useState([]);
   const [user, setUser] = useState({});
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -46,14 +50,14 @@ export default function DataProduksiMesin() {
         const data = await res.json();
         if (res.ok) {
           setUser(data.user);
-          setIsAdmin(data.user.isAdmin)
+          setIsAdmin(data.user.isAdmin);
         } else {
           console.error("response tidak ok");
         }
       } catch (error) {
         console.error(error);
       }
-    }
+    };
 
     const fetchStandar = async () => {
       try {
@@ -89,7 +93,7 @@ export default function DataProduksiMesin() {
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken));
 
-      fetchUser()
+    fetchUser();
     fetchStandar();
     fetchActual().then(() => {
       setTimeout(() => {
@@ -114,7 +118,8 @@ export default function DataProduksiMesin() {
       const rejectedRate =
         ((ac.rejectRate / ac.output) * 100).toFixed(2) + " %";
       const downtimeRate = ((ac.downtime / ac.output) * 100).toFixed(2) + " %";
-      const stdDowntimeRate = ((std.downtime / std.output) * 100).toFixed(2) + " %";
+      const stdDowntimeRate =
+        ((std.downtime / std.output) * 100).toFixed(2) + " %";
       const selisihOutput = ac.output - (std.output || 0) + " unit";
       const selisihReject =
         ((ac.rejectRate / ac.output) * 100 - (std.rejectRate || 0)).toFixed(2) +
@@ -144,10 +149,27 @@ export default function DataProduksiMesin() {
         downtimeRate,
         downtime: ac.downtime,
       };
-    }); 
+    });
 
     setUpdatedActual(result);
   }, [actual, standar]);
+
+  useEffect(() => {  
+    let finalDate = date
+
+    if (shift === 'day') {
+      finalDate = new Date(`${date}T00:00:00`);
+    } else {
+      finalDate = new Date(`${date}T18:01:00`);
+    }
+  
+    // if (isNaN(finalDate.getTime())) {
+    //   alert('Tanggal tidak valid');
+    //   return;
+    // }
+  
+    setDate(finalDate)
+  }, [shift]);
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -209,7 +231,8 @@ export default function DataProduksiMesin() {
 
   const handleDeleteStandar = (id) => {
     Swal.fire({
-      title: "Yakin hapus data ini? Data Actual Terkait Juga mungkin akan Rusak Bila Data Standar Dihapus",
+      title:
+        "Yakin hapus data ini? Data Actual Terkait Juga mungkin akan Rusak Bila Data Standar Dihapus",
       showCancelButton: true,
       confirmButtonText: "Hapus",
       cancelButtonText: "Batal",
@@ -278,7 +301,7 @@ export default function DataProduksiMesin() {
     const isToMatch = !filterTo || new Date(d.date) <= new Date(filterTo);
     return isMesinMatch && isFromMatch && isToMatch;
   });
-
+ 
   const CreateStandar = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -328,6 +351,7 @@ export default function DataProduksiMesin() {
         },
         body: JSON.stringify({
           csrfToken,
+          date,
           standarId: newStandarId,
           output: newOutput,
           rejectRate: newRejectedRate,
@@ -368,7 +392,10 @@ export default function DataProduksiMesin() {
     return (
       <div className="p-6 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-2">Akses Ditolak</h1>
-        <p>Akun anda dalam keadaan tidak aktif, silahkan hubungi admin untuk mengaktifkan akun anda</p>
+        <p>
+          Akun anda dalam keadaan tidak aktif, silahkan hubungi admin untuk
+          mengaktifkan akun anda
+        </p>
       </div>
     );
   }
@@ -392,7 +419,7 @@ export default function DataProduksiMesin() {
             onChange={(e) => setFilterMesin(e.target.value)}
           >
             <option value="">Semua Mesin</option>
-            {(standar).map((std, i) => (
+            {standar.map((std, i) => (
               <option key={i} value={std.name}>
                 {std.name}
               </option>
@@ -473,6 +500,23 @@ export default function DataProduksiMesin() {
             <h3>
               Tambah Data Produksi <b>Aktual</b>
             </h3>
+            <label className="block">Tanggal</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="border px-2 py-1"
+              required
+            />
+            <label className="block">Shift</label>
+            <select
+              value={shift}
+              onChange={(e) => setShift(e.target.value)}
+              className="border px-2 py-1"
+            >
+              <option value="day">Day (00:00 - 18:00)</option>
+              <option value="night">Night (18:01 - 23:59)</option>
+            </select>
             <label>
               Mesin:
               <select
@@ -510,7 +554,7 @@ export default function DataProduksiMesin() {
               Downtime Aktual (jam):
               <input
                 type="number"
-                id="inputDowntime" 
+                id="inputDowntime"
                 value={newDowntime}
                 onChange={(e) => setNewDowntime(e.target.value)}
               />

@@ -9,7 +9,7 @@ export async function POST(req) {
 
   try {
     const body = await req.json();
-    const { csrfToken, standarId, output, rejectRate, downtime } = body;
+    const { date, csrfToken, standarId, output, rejectRate, downtime } = body;
 
     if (
       !csrfTokenFromCookie ||
@@ -24,7 +24,7 @@ export async function POST(req) {
       output,
       rejectRate,
       downtime,
-      date: new Date(), 
+      date : date?? new Date(), 
     });
     await newActual.save();
     
