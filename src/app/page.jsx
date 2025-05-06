@@ -136,65 +136,74 @@ export default function Dashboard() {
         const { ctx } = chart;
         const dataset = chart.data.datasets[0];
         const meta = chart.getDatasetMeta(0);
-    
+
         if (!dataset || !meta || !meta.data.length) return;
-    
+
         let minIndex = 0;
         dataset.data.forEach((val, i) => {
           if (val < dataset.data[minIndex]) {
             minIndex = i;
           }
         });
-    
+
         const bar = meta.data[minIndex];
         if (!bar) return;
-    
+
         const text = "Decreased consumer demand";
         const padding = 6;
         const radius = 6;
         const tailHeight = 8;
-    
+
         ctx.save();
         ctx.font = "bold 12px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-    
+
         const textWidth = ctx.measureText(text).width;
         const boxWidth = textWidth + padding * 2;
         const boxHeight = 28;
-    
+
         const x = bar.x;
         const y = bar.y - boxHeight - tailHeight - 6;
-    
+
         // ===== Gambar Bubble dengan Border =====
         ctx.beginPath();
         ctx.moveTo(x - boxWidth / 2 + radius, y);
         ctx.lineTo(x + boxWidth / 2 - radius, y);
         ctx.quadraticCurveTo(x + boxWidth / 2, y, x + boxWidth / 2, y + radius);
         ctx.lineTo(x + boxWidth / 2, y + boxHeight - radius);
-        ctx.quadraticCurveTo(x + boxWidth / 2, y + boxHeight, x + boxWidth / 2 - radius, y + boxHeight);
+        ctx.quadraticCurveTo(
+          x + boxWidth / 2,
+          y + boxHeight,
+          x + boxWidth / 2 - radius,
+          y + boxHeight
+        );
         ctx.lineTo(x + 6, y + boxHeight); // sebelum tail
         ctx.lineTo(x, y + boxHeight + tailHeight); // tail point
         ctx.lineTo(x - 6, y + boxHeight); // setelah tail
         ctx.lineTo(x - boxWidth / 2 + radius, y + boxHeight);
-        ctx.quadraticCurveTo(x - boxWidth / 2, y + boxHeight, x - boxWidth / 2, y + boxHeight - radius);
+        ctx.quadraticCurveTo(
+          x - boxWidth / 2,
+          y + boxHeight,
+          x - boxWidth / 2,
+          y + boxHeight - radius
+        );
         ctx.lineTo(x - boxWidth / 2, y + radius);
         ctx.quadraticCurveTo(x - boxWidth / 2, y, x - boxWidth / 2 + radius, y);
         ctx.closePath();
-    
+
         // Border saja
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.stroke();
-    
+
         // Teks hitam
         ctx.fillStyle = "black";
         ctx.fillText(text, x, y + boxHeight / 2);
-    
+
         ctx.restore();
       },
     };
-    
 
     const ctxOutput = outputChartRef.current.getContext("2d");
     const ctxReject = rejectChartRef.current.getContext("2d");
@@ -215,12 +224,12 @@ export default function Dashboard() {
           {
             label: "Actual Output",
             data: groupedData.map((m) => m.output_actual),
-            backgroundColor: groupedData.map((m) => {
-              return m.output_actual < m.output_standard
+            backgroundColor: groupedData.map((m) =>
+              m.output_actual < m.output_standard
                 ? "rgba(239, 68, 68, 0.6)"
-                : "rgba(34, 197, 94, 0.6)";
-            }), // Hijau
-            borderRadius: 10, // Sudut melengkung
+                : "rgba(34, 197, 94, 0.6)"
+            ),
+            borderRadius: 10,
           },
         ],
       },
@@ -230,6 +239,23 @@ export default function Dashboard() {
           legend: {
             display: false,
             position: "bottom",
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const dataIndex = context.dataIndex;
+                const item = groupedData[dataIndex];
+                return [
+                  `Actual: ${item.output_actual}`,
+                  `Standard: ${item.output_standard}`,
+                  `${item.output_actual > item.output_standard ? "+" : ""}${item.output_actual - item.output_standard} (${
+                    item.output_standard !== 0
+                      ? (((item.output_actual - item.output_standard) / item.output_standard) * 100).toFixed(1)
+                      : "0"
+                  }%)`,
+                ];
+              },
+            },
           },
         },
         scales: {
@@ -553,8 +579,7 @@ export default function Dashboard() {
                 Above Standard
               </small>
             </div>
-            <div className="flex flex-row items-center">
-            </div>
+            <div className="flex flex-row items-center"></div>
             <canvas ref={rejectChartRef} className="w-full h-64" />
           </div>
         </div>

@@ -149,8 +149,6 @@ export default function DataProduksiMesin() {
     setUpdatedActual(result);
   }, [actual, standar]);
 
-  useEffect(() => {console.log(user)},[user])
-
   const handleDelete = (id) => {
     Swal.fire({
       title: "Yakin hapus data ini?",
@@ -440,7 +438,7 @@ export default function DataProduksiMesin() {
               <td>{d.stdRejectRate}</td>
               <td>{d.selisihOutput}</td>
               <td>{d.selisihReject}</td>
-              <td>{d.stdDowntimeRate} %</td>
+              <td>{d.stdDowntimeRate}</td>
               <td>{d.downtimeRate}</td>
               <td>
                 <button
@@ -553,7 +551,7 @@ export default function DataProduksiMesin() {
               </select>
             </label>
             <label>
-              Standar Output:
+              Actual Output:
               <input
                 type="number"
                 id="inputOutput"
@@ -562,7 +560,7 @@ export default function DataProduksiMesin() {
               />
             </label>
             <label>
-              Standar Reject:
+              Actual Reject:
               <input
                 type="number"
                 id="inputReject"
@@ -571,7 +569,7 @@ export default function DataProduksiMesin() {
               />
             </label>
             <label>
-              Standar Downtime (jam):
+              Actual Downtime (jam):
               <input
                 type="number"
                 id="inputDowntime"
