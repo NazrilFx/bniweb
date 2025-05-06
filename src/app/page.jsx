@@ -516,7 +516,7 @@ export default function Dashboard() {
             title="Total Production"
             icon={1}
             value={outputSum}
-            subtitle={`${outputSum - outputStandarSum} from target`}
+            subtitle={`${outputSum - outputStandarSum} vs target`}
             color={outputSum < outputStandarSum ? "red" : "green"}
             isPlus={outputSum < outputStandarSum ? false : true}
           />
@@ -524,7 +524,7 @@ export default function Dashboard() {
             icon={2}
             title="Average Efficiency"
             value={avgEfficiency + " %"}
-            subtitle={`${(avgEfficiency - 100).toFixed(2)} % from target`}
+            subtitle={`${(avgEfficiency - 100).toFixed(2)} % vs target`}
             color={avgEfficiency > 100 ? "green" : "red"}
             isPlus={avgEfficiency > 100 ? true : false}
           />
@@ -532,7 +532,7 @@ export default function Dashboard() {
             icon={3}
             title="Quality Rate"
             value={avgQuality + " %"}
-            subtitle={`${(avgQuality - 85).toFixed(2)} % from target`}
+            subtitle={`${(avgQuality - 85).toFixed(2)} % vs target`}
             color={avgQuality > 85 ? "green" : "red"}
             isPlus={avgQuality > 85 ? true : false}
           />
@@ -542,7 +542,7 @@ export default function Dashboard() {
             value={avgDowntime.averageActual + " hrs"}
             subtitle={`${(100 - avgDowntime.achievementPercentage).toFixed(
               2
-            )} % from target`}
+            )} % vs target`}
             color={
               100 - avgDowntime.achievementPercentage < 0 ? "red" : "green"
             }
