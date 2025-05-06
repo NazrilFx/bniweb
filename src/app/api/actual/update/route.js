@@ -10,7 +10,7 @@ export async function PUT(req) {
 
   try {
     const body = await req.json();
-    const { csrfToken, id, standarId, output, rejectRate, downtime } = body;
+    const { csrfToken, id, date, standarId, output, rejectRate, downtime } = body;
     if (
       !csrfTokenFromCookie ||
       !csrfToken ||
@@ -24,6 +24,7 @@ export async function PUT(req) {
     const updatedActual = await Actual.findByIdAndUpdate(
       id,
       {
+        date,
         standarId,
         output,
         rejectRate,

@@ -11,7 +11,10 @@ dayjs.extend(utc);
 export default function DataProduksiMesin() {
   // date
   const [date, setDate] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
   const [shift, setShift] = useState("day");
+  const [finalDate, setFinalDate] = useState("");
+  const [targetName, setTargetName] = useState("");
 
   const [newName, setNewName] = useState("");
   const [newStandarId, setNewStandarId] = useState("");
@@ -30,15 +33,31 @@ export default function DataProduksiMesin() {
   const [loading, setLoading] = useState(false);
   const [targetStandar, setTargerStandar] = useState("");
   const [targetActual, setTargerActual] = useState("");
-  const [isModalStandarEditOpen, setIsModalStandarEditOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
   const [actual, setActual] = useState([]);
   const [updatedActual, setUpdatedActual] = useState([]);
   const [user, setUser] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [newDate, setNewDate] = useState("");
+  const [newShift, setNewShift] = useState("");
+  const [newFullDate, setNewFullDate] = useState("");
+
+  useEffect(() => {
+    console.log(finalDate);
+  }, [finalDate]);
+
   useEffect(() => {
     setLoading(true);
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    // Format YYYY-MM-DD
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    setFilterTo(formatDate(today));
+    setFilterFrom(formatDate(sevenDaysAgo));
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -102,6 +121,19 @@ export default function DataProduksiMesin() {
     });
   }, []);
 
+  useEffect(() => {
+    const result = updatedActual.filter((d) => {
+      const isMesinMatch =
+        !filterMesin || d.name.toLowerCase() === filterMesin.toLowerCase();
+      const isFromMatch =
+        !filterFrom || new Date(d.date) >= new Date(filterFrom);
+      const isToMatch = !filterTo || new Date(d.date) <= new Date(filterTo);
+      return isMesinMatch && isFromMatch && isToMatch;
+    });
+
+    setFilteredData(result);
+  }, [filterFrom, filterTo, updatedActual, filterMesin]);
+
   // const (e) => setNewName(e.target.value)} = (e) => {
   //   setFormData({
   //     ...formData,
@@ -135,8 +167,10 @@ export default function DataProduksiMesin() {
 
       return {
         _id: ac._id.toString(),
+        originalDate: ac.date,
         date,
         shift,
+        standarId: ac.standarId,
         name: std.name,
         output: ac.output,
         rejectRate: ac.rejectRate,
@@ -154,22 +188,36 @@ export default function DataProduksiMesin() {
     setUpdatedActual(result);
   }, [actual, standar]);
 
-  useEffect(() => {  
-    let finalDate = date
+  useEffect(() => {
+    if (!newDate) return;
 
-    if (shift === 'day') {
-      finalDate = new Date(`${date}T00:00:00`);
-    } else {
-      finalDate = new Date(`${date}T18:01:00`);
+    try {
+      // Pecah newDate menjadi bagian tahun, bulan, dan hari
+      const [year, month, day] = newDate.split("-").map(Number);
+
+      // Set tanggal dan waktu menggunakan Date.UTC untuk menghindari masalah zona waktu
+      let parsed = new Date(Date.UTC(year, month - 1, day));
+
+      if (isNaN(parsed.getTime())) {
+        console.error("Invalid date string:", newDate);
+        alert("Tanggal tidak valid");
+        return;
+      }
+
+      // Set jam sesuai shift
+      if (newShift === "day") {
+        parsed.setUTCHours(6, 1, 0, 0); // Set waktu ke 00:00:00 UTC
+      } else {
+        parsed.setUTCHours(19, 0, 0, 0); // Set waktu ke 18:01:00 UTC
+      }
+
+      const isoWithOffset = dayjs.utc(parsed).format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+      setFinalDate(isoWithOffset);
+    } catch (err) {
+      console.error("Gagal parsing date:", newDate, err);
     }
-  
-    // if (isNaN(finalDate.getTime())) {
-    //   alert('Tanggal tidak valid');
-    //   return;
-    // }
-  
-    setDate(finalDate)
-  }, [shift]);
+  }, [newShift, newDate]);
+
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -208,6 +256,7 @@ export default function DataProduksiMesin() {
         },
         body: JSON.stringify({
           csrfToken,
+          date: finalDate,
           id: targetActual,
           standarId: newStandarId,
           output: newOutput,
@@ -295,13 +344,6 @@ export default function DataProduksiMesin() {
     }
   };
 
-  const filteredData = updatedActual.filter((d) => {
-    const isMesinMatch = !filterMesin || d.name === filterMesin;
-    const isFromMatch = !filterFrom || new Date(d.date) >= new Date(filterFrom);
-    const isToMatch = !filterTo || new Date(d.date) <= new Date(filterTo);
-    return isMesinMatch && isFromMatch && isToMatch;
-  });
- 
   const CreateStandar = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -402,7 +444,7 @@ export default function DataProduksiMesin() {
 
   return (
     <div>
-      <div className="header">
+      <div className="header"> 
         <div className="filters">
           <input
             type="date"
@@ -478,7 +520,10 @@ export default function DataProduksiMesin() {
                   className="edit-btn"
                   onClick={() => {
                     setIsModalEditOpen(true);
+                    setNewDate(d.date);
+                    setNewShift(d.shift);
                     setTargerActual(d._id);
+                    setTargetName(d.name);
                     setNewStandarId(d.standarId);
                     setNewOutput(d.output);
                     setNewRejectedRate(d.rejectRate);
@@ -579,6 +624,21 @@ export default function DataProduksiMesin() {
               Edit Data Produksi <b>Aktual</b>
             </h3>
 
+            <label className="block">Tanggal</label>
+            <input
+            type="date"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+          />
+            <label className="block">Shift</label>
+            <select
+              value={newShift}
+              onChange={(e) => setNewShift(e.target.value)}
+              className="border px-2 py-1"
+            >
+              <option value="day">Day (00:00 - 18:00)</option>
+              <option value="night">Night (18:01 - 23:59)</option>
+            </select>
             <label>
               Mesin:
               <select
@@ -586,7 +646,7 @@ export default function DataProduksiMesin() {
                 value={newStandarId}
                 onChange={(e) => setNewStandarId(e.target.value)}
               >
-                <option value="">-- Pilih Mesin --</option>
+                <option value="">Pilih mesin</option>
                 {standar.map((s, i) => (
                   <option key={i} value={s._id.toString()}>
                     {s.name}
